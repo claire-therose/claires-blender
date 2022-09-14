@@ -130,6 +130,8 @@ GPU_SHADER_CREATE_INFO(draw_gpencil)
     /* Per Object */
     .push_constant(Type::FLOAT, "gpThicknessScale") /* TODO(fclem): Replace with object info. */
     .push_constant(Type::FLOAT, "gpThicknessWorldScale") /* TODO(fclem): Same as above. */
+    .push_constant(Type::VEC3, "gpCameraPos")
+    .push_constant(Type::FLOAT, "gpCameraFOV")
     .define("gpThicknessIsScreenSpace", "(gpThicknessWorldScale < 0.0)")
     /* Per Layer */
     .push_constant(Type::FLOAT, "gpThicknessOffset")

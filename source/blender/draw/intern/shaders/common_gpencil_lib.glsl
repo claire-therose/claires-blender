@@ -61,15 +61,27 @@ vec2 gpencil_project_to_screenspace(vec4 v, vec4 viewport_size)
   return ((v.xy / v.w) * 0.5 + 0.5) * viewport_size.xy;
 }
 
-float gpencil_stroke_thickness_modulate(float thickness, vec4 ndc_pos, vec4 viewport_size)
+float gpencil_stroke_thickness_modulate(float thickness, vec3 out_P, vec4 viewport_size)
 {
   /* Modify stroke thickness by object and layer factors. */
   thickness = max(1.0, thickness * gpThicknessScale + gpThicknessOffset);
 
   if (gpThicknessIsScreenSpace) {
-    /* Multiply offset by view Z so that offset is constant in screenspace.
-     * (e.i: does not change with the distance to camera) */
-    thickness *= ndc_pos.w;
+    /* Use world space thickness + distance scale factor to give screen space
+     * through world space - allows for zooming in and such */
+    /* 1 / GPENCIL_PIXEL_FACTOR sent through gpThicknessWorldScale as a negative (to still
+     identify the thickness as screen space) */
+    float invertedPixelFactor = gpThicknessWorldScale * -1;
+    thickness *= invertedPixelFactor * ProjectionMatrix[1][1] * viewport_size.y;
+    
+    vec3 distanceVec = out_P - gpCameraPos;
+    float dist = sqrt(dot(distanceVec, distanceVec));
+    
+    // distance scale formula (tan(1/2 fov) * d)
+    float distanceScaleFactor = tan(gpCameraFOV/2) * dist;
+    
+    thickness *= distanceScaleFactor;
+    
   }
   else {
     /* World space point size. */
@@ -227,7 +239,7 @@ vec4 gpencil_vertex(ivec4 ma,
     vec2 line_adj = safe_normalize((use_curr) ? (ss1 - ss_adj) : (ss_adj - ss2));
 
     float thickness = abs((use_curr) ? thickness1 : thickness2);
-    thickness = gpencil_stroke_thickness_modulate(thickness, out_ndc, viewport_size);
+    thickness = gpencil_stroke_thickness_modulate(thickness, out_P, viewport_size);
     float clamped_thickness = gpencil_clamp_small_stroke_thickness(thickness, out_ndc);
 
     out_uv = vec2(x, y) * 0.5 + 0.5;

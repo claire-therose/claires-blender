@@ -13,14 +13,17 @@
 
 #include "DNA_gpencil_types.h"
 #include "DNA_view3d_types.h"
+#include "DNA_camera_types.h"
 
 #include "BKE_gpencil.h"
 #include "BKE_lib_id.h"
 #include "BKE_object.h"
+#include "BKE_camera.h"
 
 #include "BLI_hash.h"
 #include "BLI_link_utils.h"
 #include "BLI_memblock.h"
+#include "BLI_math.h"
 
 #include "gpencil_engine.h"
 
@@ -273,7 +276,9 @@ GPENCIL_tLayer *gpencil_layer_cache_add(GPENCIL_PrivateData *pd,
                                                 pd->vertex_paint_opacity);
   /* Negate thickness sign to tag that strokes are in screen space.
    * Convert to world units (by default, 1 meter = 2000 pixels). */
-  float thickness_scale = (is_screenspace) ? -1.0f : (gpd->pixfactor / GPENCIL_PIXEL_FACTOR);
+  /* sending GPENCIL_PIXEL_FACTOR to the shader through a negative gpThicknessWorldScale,
+   * still counts as screen space but gives us the data we need for correct scaling */
+  float thickness_scale = (is_screenspace) ? (-1.0f / GPENCIL_PIXEL_FACTOR) : (gpd->pixfactor / GPENCIL_PIXEL_FACTOR);
   float layer_opacity = gpencil_layer_final_opacity_get(pd, ob, gpl);
   float layer_tint[4];
   float layer_alpha;
@@ -393,6 +398,13 @@ GPENCIL_tLayer *gpencil_layer_cache_add(GPENCIL_PrivateData *pd,
     DRW_shgroup_uniform_float_copy(grp, "gpThicknessOffset", (float)gpl->line_change);
     DRW_shgroup_uniform_float_copy(grp, "gpThicknessWorldScale", thickness_scale);
     DRW_shgroup_uniform_float_copy(grp, "gpVertexColorOpacity", vert_col_opacity);
+      
+    /* this method for getting fov is from lineart_cpu.c - works great! */
+    Camera* cam = (Camera *)pd->scene->camera->data;
+    float sensor = BKE_camera_sensor_size(cam->sensor_fit, cam->sensor_x, cam->sensor_y);
+    const double fov = focallength_to_fov(cam->lens, sensor);
+    DRW_shgroup_uniform_vec3_copy(grp, "gpCameraPos", pd->scene->camera->loc);
+    DRW_shgroup_uniform_float_copy(grp, "gpCameraFOV", fov);
 
     /* If random color type, need color by layer. */
     float gpl_color[4];
