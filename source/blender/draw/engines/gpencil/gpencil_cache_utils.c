@@ -398,13 +398,15 @@ GPENCIL_tLayer *gpencil_layer_cache_add(GPENCIL_PrivateData *pd,
     DRW_shgroup_uniform_float_copy(grp, "gpThicknessOffset", (float)gpl->line_change);
     DRW_shgroup_uniform_float_copy(grp, "gpThicknessWorldScale", thickness_scale);
     DRW_shgroup_uniform_float_copy(grp, "gpVertexColorOpacity", vert_col_opacity);
-      
-    /* this method for getting fov is from lineart_cpu.c - works great! */
-    Camera* cam = (Camera *)pd->scene->camera->data;
-    float sensor = BKE_camera_sensor_size(cam->sensor_fit, cam->sensor_x, cam->sensor_y);
-    const double fov = focallength_to_fov(cam->lens, sensor);
-    DRW_shgroup_uniform_vec3_copy(grp, "gpCameraPos", pd->scene->camera->loc);
-    DRW_shgroup_uniform_float_copy(grp, "gpCameraFOV", fov);
+    
+    if (pd->scene->camera) {
+        /* this method for getting fov is from lineart_cpu.c - works great! */
+        Camera* cam = (Camera *)pd->scene->camera->data;
+        float sensor = BKE_camera_sensor_size(cam->sensor_fit, cam->sensor_x, cam->sensor_y);
+        const double fov = focallength_to_fov(cam->lens, sensor);
+        DRW_shgroup_uniform_vec3_copy(grp, "gpCameraPos", pd->scene->camera->loc);
+        DRW_shgroup_uniform_float_copy(grp, "gpCameraFOV", fov);
+    }
 
     /* If random color type, need color by layer. */
     float gpl_color[4];
