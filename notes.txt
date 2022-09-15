@@ -1,4 +1,4 @@
-Notes:
+the notes
 
 Screen Space scale is controlled via:
 	shader constants declared in draw_view_info.hh
