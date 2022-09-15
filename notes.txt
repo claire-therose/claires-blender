@@ -1,0 +1,12 @@
+Notes:
+
+Screen Space scale is controlled via:
+	shader constants declared in draw_view_info.hh
+	those constants are passed to the shader by gpencil_cache_utils.c
+	           has access to the scene and other data ^
+	common_gpencil_lib.glsl executes on that data to modulate the thickness
+
+	1: when I say constants on the first line, that is the term used in
+		the header code, but they're really more just spaces for data,
+		and, unlike their name, can be changed at will
+		(and they are changed in gpencil_cache_utils.c)
