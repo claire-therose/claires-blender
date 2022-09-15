@@ -10,3 +10,10 @@ Screen Space scale is controlled via:
 		the header code, but they're really more just spaces for data,
 		and, unlike their name, can be changed at will
 		(and they are changed in gpencil_cache_utils.c)
+
+Templates are stored as blend files
+	default is in release/datafiles
+	rest are in release/scripts/startup/bl_app_templates and in respective folders
+	don't know how to create new templates yet, but might not need to
+	[note]: splash image is also stored in release/datafiles
+		definitely want to change that - for fun!
