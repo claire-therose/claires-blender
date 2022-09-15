@@ -10,6 +10,12 @@ Claire's Custom Blender
 Heyo everyone! This is my custom blender repository, where I tinker with blender to customize it to my needs. 
 Feel free to look around!
 
+Current Features
+----------------
+Screen Space line thickness is relative to the camera, making previewing much easier.
+
+[More to come!]
+
 License
 -------
 
