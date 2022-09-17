@@ -84,6 +84,7 @@ typedef enum ModifierType {
   eModifierType_MeshToVolume = 58,
   eModifierType_VolumeDisplace = 59,
   eModifierType_VolumeToMesh = 60,
+  eModifierType_Squish = 61,
   NUM_MODIFIER_TYPES,
 } ModifierType;
 
@@ -2380,6 +2381,15 @@ typedef enum VolumeToMeshResolutionMode {
 typedef enum VolumeToMeshFlag {
   VOLUME_TO_MESH_USE_SMOOTH_SHADE = 1 << 0,
 } VolumeToMeshFlag;
+
+/** Squish modifier. */
+typedef struct SquishModifierData {
+  ModifierData modifier;
+
+  /** Factor for squish */
+  float factor;
+  char _pad[4];
+} SquishModifierData;
 
 #ifdef __cplusplus
 }

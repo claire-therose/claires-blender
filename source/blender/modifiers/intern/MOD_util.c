@@ -333,5 +333,6 @@ void modifier_type_init(ModifierTypeInfo *types[])
   INIT_TYPE(VolumeDisplace);
   INIT_TYPE(VolumeToMesh);
   INIT_TYPE(Nodes);
+  INIT_TYPE(Squish);
 #undef INIT_TYPE
 }

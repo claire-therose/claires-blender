@@ -82,6 +82,7 @@ set(SRC
   intern/MOD_solidify.c
   intern/MOD_solidify_extrude.c
   intern/MOD_solidify_nonmanifold.c
+  intern/MOD_squish.c
   intern/MOD_subsurf.c
   intern/MOD_surface.c
   intern/MOD_surfacedeform.c

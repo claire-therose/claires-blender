@@ -253,6 +253,11 @@ const EnumPropertyItem rna_enum_object_modifier_type_items[] = {
      ICON_MOD_SMOOTH,
      "Smooth Laplacian",
      "Reduce the noise on a mesh surface with minimal changes to its shape"},
+    {eModifierType_Squish,
+     "SQUISH",
+     ICON_FULLSCREEN_EXIT,
+     "Squish",
+     "Deform the mesh to change its perceived FOV"},
     {eModifierType_SurfaceDeform,
      "SURFACE_DEFORM",
      ICON_MOD_MESHDEFORM,
@@ -7232,6 +7237,28 @@ static void rna_def_modifier_volume_to_mesh(BlenderRNA *brna)
   RNA_define_lib_overridable(false);
 }
 
+static void rna_def_modifier_squish(BlenderRNA *brna)
+{
+  StructRNA *srna;
+  PropertyRNA *prop;
+
+  // Define the RNA and bind it to the SquishModifierData DNA struct
+  srna = RNA_def_struct(brna, "SquishModifier", "Modifier");
+  RNA_def_struct_ui_text(srna, "Squish Modifier", "Squish modifier");
+  RNA_def_struct_sdna(srna, "SquishModifierData");
+  RNA_def_struct_ui_icon(srna, ICON_FULLSCREEN_EXIT);
+
+  RNA_define_lib_overridable(true); // probably
+
+  prop = RNA_def_property(srna, "factor", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_range(prop, -FLT_MAX, FLT_MAX);
+  RNA_def_property_ui_range(prop, -10.0, 10.0, 1.0, 3);
+  RNA_def_property_ui_text(prop, "Factor", "Amount to squish object");
+  RNA_def_property_update(prop, 0, "rna_Modifier_update");
+
+  RNA_define_lib_overridable(false);
+}
+
 void RNA_def_modifier(BlenderRNA *brna)
 {
   StructRNA *srna;
@@ -7383,6 +7410,7 @@ void RNA_def_modifier(BlenderRNA *brna)
   rna_def_modifier_mesh_to_volume(brna);
   rna_def_modifier_volume_displace(brna);
   rna_def_modifier_volume_to_mesh(brna);
+  rna_def_modifier_squish(brna);
 }
 
 #endif
