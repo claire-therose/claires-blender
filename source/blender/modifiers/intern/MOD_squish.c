@@ -12,15 +12,30 @@
 #include "DNA_meshdata_types.h"
 #include "DNA_object_types.h"
 #include "DNA_screen_types.h"
+#include "DNA_camera_types.h"
+#include "DNA_scene_types.h"
+
+#include "DEG_depsgraph_query.h"
 
 #include "RNA_access.h"
 #include "RNA_prototypes.h"
 
 #include "BKE_modifier.h"
+#include "BKE_camera.h"
 
 #include "UI_resources.h"
 
-
+static void deformVerts(ModifierData *md,
+                        const ModifierEvalContext *ctx,
+                        struct Mesh *mesh,
+                        float (*vertexCos)[3],
+                        int verts_num)
+{
+    SimpleDeformModifierData *sdmd = (SimpleDeformModifierData *)md;
+    Mesh *mesh_src = NULL;
+    struct Scene *scene = DEG_get_input_scene(ctx->depsgraph);
+    Camera* cam = (Camera*)scene->camera;
+}
 
 ModifierTypeInfo modifierType_Squish = {
     /* name */ N_("Squish"),
@@ -34,7 +49,7 @@ ModifierTypeInfo modifierType_Squish = {
 
     /* copyData */ BKE_modifier_copydata_generic,
 
-    /* deformVerts */ NULL,
+    /* deformVerts */ deformVerts,
     /* deformMatrices */ NULL,
     /* deformVertsEM */ NULL,
     /* deformMatricesEM */ NULL,
