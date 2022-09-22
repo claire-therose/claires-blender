@@ -601,6 +601,11 @@
     .bevel_convex = 0.0f, \
   }
 
+#define _DNA_DEFAULT_SquishModifierData \
+  { \
+    .factor = 0.0f, \
+  }
+
 #define _DNA_DEFAULT_SubsurfModifierData \
   { \
     .subdivType = 0, \

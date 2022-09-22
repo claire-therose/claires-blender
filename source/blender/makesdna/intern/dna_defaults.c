@@ -275,6 +275,7 @@ SDNA_DEFAULT_DECL_STRUCT(SkinModifierData);
 SDNA_DEFAULT_DECL_STRUCT(SmoothModifierData);
 /* Softbody modifier skipped for now. */
 SDNA_DEFAULT_DECL_STRUCT(SolidifyModifierData);
+SDNA_DEFAULT_DECL_STRUCT(SquishModifierData);
 SDNA_DEFAULT_DECL_STRUCT(SubsurfModifierData);
 SDNA_DEFAULT_DECL_STRUCT(SurfaceModifierData);
 SDNA_DEFAULT_DECL_STRUCT(SurfaceDeformModifierData);
@@ -515,6 +516,7 @@ const void *DNA_default_table[SDNA_TYPE_MAX] = {
     SDNA_DEFAULT_DECL(SmoothModifierData),
     /* Softbody modifier skipped for now. */
     SDNA_DEFAULT_DECL(SolidifyModifierData),
+    SDNA_DEFAULT_DECL(SquishModifierData),
     SDNA_DEFAULT_DECL(SubsurfModifierData),
     SDNA_DEFAULT_DECL(SurfaceModifierData),
     SDNA_DEFAULT_DECL(SurfaceDeformModifierData),
