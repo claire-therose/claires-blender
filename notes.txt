@@ -1,4 +1,4 @@
-the notes
+da notes
 
 Screen Space scale is controlled via:
 	shader constants declared in draw_view_info.hh
@@ -17,3 +17,26 @@ Templates are stored as blend files
 	don't know how to create new templates yet, but might not need to
 	[note]: splash image is also stored in release/datafiles
 		definitely want to change that - for fun!
+
+Icon:
+	Data stored in release/darwin/Blender.app gets copied into the executable
+	Icon stored in Blender.app/Contents/Resources/blender icon.icns
+	This might only be a Mac thing
+	see: very useful tutorial for making macOS app icons in terminal
+		https://www.codingforentrepreneurs.com/blog/create-icns-icons-for-macos-apps/
+
+Modifiers
+	big and complex
+	need to add to DNA_modifier_types.h, rna_modifier.c, MOD_modifiertypes.h, and MOD_util.c
+	also need to create new file: MOD_[modifiername].c, and add that to the modifiers CMake
+		located in the CMakeLists.txt file of the modifiers folder
+	See 'Added framework for Squish modifier' commit on repository
+	also actually see this tutorial that I followed to do this thank you Élie:
+		https://blog.exppad.com/article/writing-blender-modifier
+	Further:
+	Display - see panel_draw of other modifiers (also needs panelRegister, they're together)
+	Defaults - initData gets DNA struct through DNA_defaults.h, which gets data from:
+		Default values declared in DNA_modifier_defaults.h
+		registered (kind of) in dna_defaults.c
+	[note]: make sure to add the methods you make to the ModifierTypeInfo list at the bottom
+		things won't work without it
