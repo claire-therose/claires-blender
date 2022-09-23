@@ -40,16 +40,70 @@ static void initData(ModifierData *md)
   MEMCPY_STRUCT_AFTER(smd, DNA_struct_default_get(SquishModifierData), modifier);
 }
 
+static void updateDepsgraph(ModifierData *md, const ModifierUpdateDepsgraphContext *ctx)
+{
+  SquishModifierData *smd = (SquishModifierData *)md;
+  DEG_add_object_relation(
+    ctx->node, ctx->scene->camera, DEG_OB_COMP_TRANSFORM, "Squish Modifier");
+  DEG_add_modifier_to_transform_relation(ctx->node, "Squish Modifier");
+}
+
 static void deformVerts(ModifierData *md,
                         const ModifierEvalContext *ctx,
                         struct Mesh *mesh,
                         float (*vertexCos)[3],
                         int verts_num)
 {
-    SimpleDeformModifierData *sdmd = (SimpleDeformModifierData *)md;
+    SquishModifierData *smd = (SquishModifierData *)md;
     Mesh *mesh_src = NULL;
     struct Scene *scene = DEG_get_input_scene(ctx->depsgraph);
-    Camera* cam = (Camera*)scene->camera;
+    Object* cam = (Object*)scene->camera; // not getting camera data this time, just the object
+    
+    Object* ob = ctx->object;
+    
+    for (int i = 0; i < verts_num; i++) {
+        float obCoor[3]; // store variable for processing coordinates
+        
+        // convert to world space
+        copy_v3_v3(obCoor, vertexCos[i]);
+        mul_m4_v3(ob->obmat, obCoor);
+        
+        // does sphere projection method
+        
+        // process vertexes in world space
+        float* camPos = cam->loc;
+        float* obLoc = ob->loc;
+        float camObjVec[3]; // vector between camera and center of object
+        copy_v3_v3(camObjVec, camPos);
+        sub_v3_v3(camObjVec, obLoc);
+        float camObjectDist = len_v3(camObjVec);
+        
+        float camVertexVec[3]; // vector between camera and individual vertex
+        copy_v3_v3(camVertexVec, obCoor);
+        sub_v3_v3(camVertexVec, camPos);
+        float camVertexDist = len_v3(camVertexVec);
+        
+        float distFromSphere = camObjectDist - camVertexDist;
+        float vecToSphere[3];
+        copy_v3_v3(vecToSphere, camVertexVec);
+        normalize_v3(vecToSphere);
+        mul_v3_fl(vecToSphere, distFromSphere);
+        
+        mul_v3_fl(vecToSphere, smd->factor);
+        
+        add_v3_v3(obCoor, vecToSphere);
+        
+        // convert to local space
+        float iobMat[4][4];
+        invert_m4_m4(iobMat, ob->obmat);
+        mul_m4_v3(iobMat, obCoor);
+        
+        // apply obCoor
+        copy_v3_v3(vertexCos[i], obCoor);
+    }
+    
+//    print_v3("obcoor", obCoor);
+    //print_m4("obmat", ob->obmat);
 }
 
 static void panel_draw(const bContext *UNUSED(C), Panel *panel)
@@ -94,7 +148,7 @@ ModifierTypeInfo modifierType_Squish = {
     /* requiredDataMask */ NULL,
     /* freeData */ NULL,
     /* isDisabled */ NULL,
-    /* updateDepsgraph */ NULL,
+    /* updateDepsgraph */ updateDepsgraph,
     /* dependsOnTime */ NULL,
     /* dependsOnNormals */ NULL,
     /* foreachIDLink */ NULL,
