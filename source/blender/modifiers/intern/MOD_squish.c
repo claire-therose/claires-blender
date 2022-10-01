@@ -61,49 +61,102 @@ static void deformVerts(ModifierData *md,
     
     Object* ob = ctx->object;
     
+    // matrix transform method
+    
+    float vertexTransform[4][4];
+    unit_m4(vertexTransform);
+    
+    float camObjDiff[3];
+    copy_v3_v3(camObjDiff, cam->loc);
+    sub_v3_v3(camObjDiff, ob->loc);
+    
+    float rotateAngle = atan2f(camObjDiff[0], camObjDiff[1]);
+    char rotateAxis = 'Z';
+    float groundVector[2] = {camObjDiff[0], camObjDiff[1]};
+    float groundVectorDist = len_v2(groundVector);
+    float rotateAngleUp = atan2f(camObjDiff[2], groundVectorDist) * -1;
+    char rotateAxisUp = 'X';
+    float scaleVectorY[3] = {1.0f, smd->factor, 1.0f};
+    
+    // order is backwards because of matrix multiplication
+    
+    rotate_m4(vertexTransform, rotateAxis, -rotateAngle);
+    rotate_m4(vertexTransform, rotateAxisUp, -rotateAngleUp);
+    rescale_m4(vertexTransform, scaleVectorY);
+    rotate_m4(vertexTransform, rotateAxisUp, rotateAngleUp);
+    rotate_m4(vertexTransform, rotateAxis, rotateAngle);
+    
+    
     for (int i = 0; i < verts_num; i++) {
         float obCoor[3]; // store variable for processing coordinates
         
-        // convert to world space
-        copy_v3_v3(obCoor, vertexCos[i]);
-        mul_m4_v3(ob->obmat, obCoor);
+        copy_v3_v3(obCoor, vertexCos[i]); // this is important keep this
         
-        // does sphere projection method
+        mul_m4_v3(vertexTransform, obCoor);
         
-        // process vertexes in world space
-        float* camPos = cam->loc;
-        float* obLoc = ob->loc;
-        float camObjVec[3]; // vector between camera and center of object
-        copy_v3_v3(camObjVec, camPos);
-        sub_v3_v3(camObjVec, obLoc);
-        float camObjectDist = len_v3(camObjVec);
+//        // camera vector method (vertex addition method, slow)
+//
+//        // convert vertex to world space
+//        mul_m4_v3(ob->obmat, obCoor);
+//
+//        // process vertexes in world space
+//        float* camPos = cam->loc;
+//        float* obLoc = ob->loc;
+//        float camObjVec[3]; // vector between camera and center of object
+//        copy_v3_v3(camObjVec, camPos);
+//        sub_v3_v3(camObjVec, obLoc);
+//        normalize_v3(camObjVec);
+//
+//        float vertexProject[3];
+//        project_v3_v3v3(vertexProject, obCoor, camObjVec);
+//
+//        mul_v3_fl(vertexProject, smd->factor - 1.0f);
+//
+//        add_v3_v3(obCoor, vertexProject);
+//
+//        // convert back to local space
+//        float iobMat[4][4];
+//        invert_m4_m4(iobMat, ob->obmat);
+//        mul_m4_v3(iobMat, obCoor);
         
-        float camVertexVec[3]; // vector between camera and individual vertex
-        copy_v3_v3(camVertexVec, obCoor);
-        sub_v3_v3(camVertexVec, camPos);
-        float camVertexDist = len_v3(camVertexVec);
-        
-        float distFromSphere = camObjectDist - camVertexDist;
-        float vecToSphere[3];
-        copy_v3_v3(vecToSphere, camVertexVec);
-        normalize_v3(vecToSphere);
-        mul_v3_fl(vecToSphere, distFromSphere);
-        
-        mul_v3_fl(vecToSphere, smd->factor);
-        
-        add_v3_v3(obCoor, vecToSphere);
-        
-        // convert to local space
-        float iobMat[4][4];
-        invert_m4_m4(iobMat, ob->obmat);
-        mul_m4_v3(iobMat, obCoor);
+            
+//        // sphere projection method
+//
+//        // convert to world space
+//        copy_v3_v3(obCoor, vertexCos[i]);
+//        mul_m4_v3(ob->obmat, obCoor);
+//
+//        // process vertexes in world space
+//        float* camPos = cam->loc;
+//        float* obLoc = ob->loc;
+//        float camObjVec[3]; // vector between camera and center of object
+//        copy_v3_v3(camObjVec, camPos);
+//        sub_v3_v3(camObjVec, obLoc);
+//        float camObjectDist = len_v3(camObjVec);
+//
+//        float camVertexVec[3]; // vector between camera and individual vertex
+//        copy_v3_v3(camVertexVec, obCoor);
+//        sub_v3_v3(camVertexVec, camPos);
+//        float camVertexDist = len_v3(camVertexVec);
+//
+//        float distFromSphere = camObjectDist - camVertexDist;
+//        float vecToSphere[3];
+//        copy_v3_v3(vecToSphere, camVertexVec);
+//        normalize_v3(vecToSphere);
+//        mul_v3_fl(vecToSphere, distFromSphere);
+//
+//        mul_v3_fl(vecToSphere, smd->factor);
+//
+//        add_v3_v3(obCoor, vecToSphere);
+//
+//        // convert to local space
+//        float iobMat[4][4];
+//        invert_m4_m4(iobMat, ob->obmat);
+//        mul_m4_v3(iobMat, obCoor);
         
         // apply obCoor
         copy_v3_v3(vertexCos[i], obCoor);
     }
-    
-//    print_v3("obcoor", obCoor);
-    //print_m4("obmat", ob->obmat);
 }
 
 static void panel_draw(const bContext *UNUSED(C), Panel *panel)
