@@ -2388,8 +2388,15 @@ typedef struct SquishModifierData {
 
   /** Factor for squish */
   float factor;
-  char _pad[4];
+  /** Squish method */
+  char mode;
+  char _pad[3];
 } SquishModifierData;
+
+enum {
+  MOD_SQUISH_MODE_CAMERA = 1,
+  MOD_SQUISH_MODE_INTERNAL = 2
+};
 
 #ifdef __cplusplus
 }

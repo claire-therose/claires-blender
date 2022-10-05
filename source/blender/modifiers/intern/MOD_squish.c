@@ -8,6 +8,7 @@
 #include "BLI_math.h" // for some reason need this include for MEMCPY_STRUCT_AFTER
 #include "BLI_utildefines.h"
 #include "BLT_translation.h"
+#include "BLI_task.h"
 
 #include "DNA_defaults.h"
 #include "DNA_mesh_types.h"
@@ -30,6 +31,53 @@
 #include "DEG_depsgraph_query.h"
 
 #include "MOD_ui_common.h"
+
+ALIGN_STRUCT struct SquishUserData {
+    float factor;
+    char mode;
+    float (*vertexCos)[3];
+    const SpaceTransform *camSpaceTransform;
+    float camObjDist;
+    float vertexTransform[4][4];
+};
+
+static void scaleCoorToSphere(float co[3], float sphereRadius, float factor) {
+    float coorDistance = len_v3(co);
+    float distancePercentage = sphereRadius / coorDistance;
+    mul_v3_fl(co, distancePercentage);
+    // interp should work
+}
+
+static void simple_helper(void *__restrict userdata,
+                          const int iter,
+                          const TaskParallelTLS *__restrict UNUSED(tls))
+{
+    const struct SquishUserData *curr_squish_data = userdata;
+    
+    /* copy vertex data */
+    float co[3];
+    copy_v3_v3(co, curr_squish_data->vertexCos[iter]);
+    
+    if (curr_squish_data->camSpaceTransform) {
+      BLI_space_transform_apply(curr_squish_data->camSpaceTransform, co);
+    }
+    
+    switch(curr_squish_data->mode) {
+        case MOD_SQUISH_MODE_CAMERA:
+            mul_m4_v3(curr_squish_data->vertexTransform, co);
+            break;
+        case MOD_SQUISH_MODE_INTERNAL:
+            scaleCoorToSphere(co, curr_squish_data->camObjDist, curr_squish_data->factor);
+            break;
+    }
+    
+    if (curr_squish_data->camSpaceTransform) {
+      BLI_space_transform_invert(curr_squish_data->camSpaceTransform, co);
+    }
+    
+    /* set vertex data back */
+    copy_v3_v3(curr_squish_data->vertexCos[iter], co);
+}
 
 static void initData(ModifierData *md)
 {
@@ -61,64 +109,71 @@ static void deformVerts(ModifierData *md,
     
     Object* ob = ctx->object;
     
-    // matrix transform method
+    /* set up data for vertex modification */
+    SpaceTransform *camSpaceTransform = NULL, tmp_transf;
+    camSpaceTransform = &tmp_transf;
+    BLI_SPACE_TRANSFORM_SETUP(camSpaceTransform, ob, cam);
+    
+    float currentPosition[3] = {0.0f, 0.0f, 0.0f};
+    BLI_space_transform_apply(camSpaceTransform, currentPosition);
     
     float vertexTransform[4][4];
     unit_m4(vertexTransform);
     
-    float camObjDiff[3];
-    copy_v3_v3(camObjDiff, cam->loc);
-    sub_v3_v3(camObjDiff, ob->loc);
+    float directionScale[3] = {1.0f, 1.0f, smd->factor};
+    rescale_m4(vertexTransform, directionScale);
+    transform_pivot_set_m4(vertexTransform, currentPosition);
     
-    float rotateAngle = atan2f(camObjDiff[0], camObjDiff[1]);
-    char rotateAxis = 'Z';
-    float groundVector[2] = {camObjDiff[0], camObjDiff[1]};
-    float groundVectorDist = len_v2(groundVector);
-    float rotateAngleUp = atan2f(camObjDiff[2], groundVectorDist) * -1;
-    char rotateAxisUp = 'X';
-    float scaleVectorY[3] = {1.0f, smd->factor, 1.0f};
+    float* camPos = cam->loc;
+    float* obLoc = ob->loc;
+    float camObjVec[3];
+    copy_v3_v3(camObjVec, camPos);
+    sub_v3_v3(camObjVec, obLoc);
+    float camObjDist = len_v3(camObjVec);
+
+    /* copied from MOD_simpledeform.c */
     
-    // order is backwards because of matrix multiplication
+    /* Build our data. */
+    /* vertex transform is a bit ugly, but makes the data shared, which is
+     much better for efficiency */
+    const struct SquishUserData squish_pool_data = {
+        .factor = smd->factor,
+        .mode = smd->mode,
+        .vertexCos = vertexCos,
+        .camSpaceTransform = camSpaceTransform,
+        .camObjDist = camObjDist,
+        .vertexTransform[0][0] = vertexTransform[0][0],
+        .vertexTransform[0][1] = vertexTransform[0][1],
+        .vertexTransform[0][2] = vertexTransform[0][2],
+        .vertexTransform[0][3] = vertexTransform[0][3],
+        .vertexTransform[1][0] = vertexTransform[1][0],
+        .vertexTransform[1][1] = vertexTransform[1][1],
+        .vertexTransform[1][2] = vertexTransform[1][2],
+        .vertexTransform[1][3] = vertexTransform[1][3],
+        .vertexTransform[2][0] = vertexTransform[2][0],
+        .vertexTransform[2][1] = vertexTransform[2][1],
+        .vertexTransform[2][2] = vertexTransform[2][2],
+        .vertexTransform[2][3] = vertexTransform[2][3],
+        .vertexTransform[3][0] = vertexTransform[3][0],
+        .vertexTransform[3][1] = vertexTransform[3][1],
+        .vertexTransform[3][2] = vertexTransform[3][2],
+        .vertexTransform[3][3] = vertexTransform[3][3]
+    };
+    /* Do deformation. */
+    TaskParallelSettings settings;
+    BLI_parallel_range_settings_defaults(&settings);
+    BLI_task_parallel_range(0, verts_num, (void *)&squish_pool_data, simple_helper, &settings);
     
-    rotate_m4(vertexTransform, rotateAxis, -rotateAngle);
-    rotate_m4(vertexTransform, rotateAxisUp, -rotateAngleUp);
-    rescale_m4(vertexTransform, scaleVectorY);
-    rotate_m4(vertexTransform, rotateAxisUp, rotateAngleUp);
-    rotate_m4(vertexTransform, rotateAxis, rotateAngle);
-    
-    
-    for (int i = 0; i < verts_num; i++) {
-        float obCoor[3]; // store variable for processing coordinates
-        
-        copy_v3_v3(obCoor, vertexCos[i]); // this is important keep this
-        
-        mul_m4_v3(vertexTransform, obCoor);
-        
-//        // camera vector method (vertex addition method, slow)
+//    for (int i = 0; i < verts_num; i++) {
+//        float obCoor[3]; // store variable for processing coordinates
 //
-//        // convert vertex to world space
-//        mul_m4_v3(ob->obmat, obCoor);
+//        copy_v3_v3(obCoor, vertexCos[i]); // this is important keep this
+//        BLI_space_transform_apply(transf, obCoor);
 //
-//        // process vertexes in world space
-//        float* camPos = cam->loc;
-//        float* obLoc = ob->loc;
-//        float camObjVec[3]; // vector between camera and center of object
-//        copy_v3_v3(camObjVec, camPos);
-//        sub_v3_v3(camObjVec, obLoc);
-//        normalize_v3(camObjVec);
+//        mul_m4_v3(vertexTransform, obCoor);
 //
-//        float vertexProject[3];
-//        project_v3_v3v3(vertexProject, obCoor, camObjVec);
-//
-//        mul_v3_fl(vertexProject, smd->factor - 1.0f);
-//
-//        add_v3_v3(obCoor, vertexProject);
-//
-//        // convert back to local space
-//        float iobMat[4][4];
-//        invert_m4_m4(iobMat, ob->obmat);
-//        mul_m4_v3(iobMat, obCoor);
-        
+//        BLI_space_transform_invert(transf, obCoor);
+
             
 //        // sphere projection method
 //
@@ -155,8 +210,8 @@ static void deformVerts(ModifierData *md,
 //        mul_m4_v3(iobMat, obCoor);
         
         // apply obCoor
-        copy_v3_v3(vertexCos[i], obCoor);
-    }
+//        copy_v3_v3(vertexCos[i], obCoor);
+//    }
 }
 
 static void panel_draw(const bContext *UNUSED(C), Panel *panel)
@@ -165,6 +220,8 @@ static void panel_draw(const bContext *UNUSED(C), Panel *panel)
 
   PointerRNA ob_ptr;
   PointerRNA *ptr = modifier_panel_get_property_pointers(panel, &ob_ptr);
+    
+  uiItemR(layout, ptr, "deform_method", UI_ITEM_R_EXPAND, NULL, ICON_NONE);
     
   uiLayoutSetPropSep(layout, true);
     

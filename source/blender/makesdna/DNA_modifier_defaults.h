@@ -604,6 +604,7 @@
 #define _DNA_DEFAULT_SquishModifierData \
   { \
     .factor = 0.0f, \
+    .mode = MOD_SQUISH_MODE_CAMERA, \
   }
 
 #define _DNA_DEFAULT_SubsurfModifierData \

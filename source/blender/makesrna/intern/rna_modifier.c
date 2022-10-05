@@ -7241,6 +7241,20 @@ static void rna_def_modifier_squish(BlenderRNA *brna)
 {
   StructRNA *srna;
   PropertyRNA *prop;
+    
+  static const EnumPropertyItem squish_mode_items[] = {
+      {MOD_SQUISH_MODE_CAMERA,
+       "CAMERA",
+       0,
+       "Camera",
+       "Compress the mesh using the camera space (most common)"},
+      {MOD_SQUISH_MODE_INTERNAL,
+       "INTERNAL",
+       0,
+       "Internal",
+       "Compress the mesh using a spherical space (keeps contour)"},
+    {0, NULL, 0, NULL, NULL},
+};
 
   // Define the RNA and bind it to the SquishModifierData DNA struct
   srna = RNA_def_struct(brna, "SquishModifier", "Modifier");
@@ -7249,6 +7263,12 @@ static void rna_def_modifier_squish(BlenderRNA *brna)
   RNA_def_struct_ui_icon(srna, ICON_FULLSCREEN_EXIT);
 
   RNA_define_lib_overridable(true); // probably
+    
+  prop = RNA_def_property(srna, "deform_method", PROP_ENUM, PROP_NONE);
+  RNA_def_property_enum_sdna(prop, NULL, "mode");
+  RNA_def_property_enum_items(prop, squish_mode_items);
+  RNA_def_property_ui_text(prop, "Mode", "");
+  RNA_def_property_update(prop, 0, "rna_Modifier_update");
 
   prop = RNA_def_property(srna, "factor", PROP_FLOAT, PROP_NONE);
   RNA_def_property_range(prop, -FLT_MAX, FLT_MAX);
