@@ -93,7 +93,6 @@ static void initData(ModifierData *md)
 
 static void updateDepsgraph(ModifierData *md, const ModifierUpdateDepsgraphContext *ctx)
 {
-  SquishModifierData *smd = (SquishModifierData *)md;
   DEG_add_object_relation(
     ctx->node, ctx->scene->camera, DEG_OB_COMP_TRANSFORM, "Squish Modifier");
   DEG_add_modifier_to_transform_relation(ctx->node, "Squish Modifier");
@@ -106,7 +105,6 @@ static void deformVerts(ModifierData *md,
                         int verts_num)
 {
     SquishModifierData *smd = (SquishModifierData *)md;
-    Mesh *mesh_src = NULL;
     struct Scene *scene = DEG_get_input_scene(ctx->depsgraph);
     Object* cam = (Object*)scene->camera; // not getting camera data this time, just the object
     
