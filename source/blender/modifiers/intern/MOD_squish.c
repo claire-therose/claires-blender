@@ -41,11 +41,14 @@ ALIGN_STRUCT struct SquishUserData {
     float vertexTransform[4][4];
 };
 
-static void scaleCoorToSphere(float co[3], float sphereRadius, float factor) {
+static void scaleCoorToSphere(float co[3], float sphereRadius, float factor)
+{
     float coorDistance = len_v3(co);
+    float coCopy[3];
+    copy_v3_v3(coCopy, co);
     float distancePercentage = sphereRadius / coorDistance;
-    mul_v3_fl(co, distancePercentage);
-    // interp should work
+    mul_v3_fl(coCopy, distancePercentage);
+    interp_v3_v3v3(co, coCopy, co, factor);
 }
 
 static void simple_helper(void *__restrict userdata,
@@ -163,55 +166,6 @@ static void deformVerts(ModifierData *md,
     TaskParallelSettings settings;
     BLI_parallel_range_settings_defaults(&settings);
     BLI_task_parallel_range(0, verts_num, (void *)&squish_pool_data, simple_helper, &settings);
-    
-//    for (int i = 0; i < verts_num; i++) {
-//        float obCoor[3]; // store variable for processing coordinates
-//
-//        copy_v3_v3(obCoor, vertexCos[i]); // this is important keep this
-//        BLI_space_transform_apply(transf, obCoor);
-//
-//        mul_m4_v3(vertexTransform, obCoor);
-//
-//        BLI_space_transform_invert(transf, obCoor);
-
-            
-//        // sphere projection method
-//
-//        // convert to world space
-//        copy_v3_v3(obCoor, vertexCos[i]);
-//        mul_m4_v3(ob->obmat, obCoor);
-//
-//        // process vertexes in world space
-//        float* camPos = cam->loc;
-//        float* obLoc = ob->loc;
-//        float camObjVec[3]; // vector between camera and center of object
-//        copy_v3_v3(camObjVec, camPos);
-//        sub_v3_v3(camObjVec, obLoc);
-//        float camObjectDist = len_v3(camObjVec);
-//
-//        float camVertexVec[3]; // vector between camera and individual vertex
-//        copy_v3_v3(camVertexVec, obCoor);
-//        sub_v3_v3(camVertexVec, camPos);
-//        float camVertexDist = len_v3(camVertexVec);
-//
-//        float distFromSphere = camObjectDist - camVertexDist;
-//        float vecToSphere[3];
-//        copy_v3_v3(vecToSphere, camVertexVec);
-//        normalize_v3(vecToSphere);
-//        mul_v3_fl(vecToSphere, distFromSphere);
-//
-//        mul_v3_fl(vecToSphere, smd->factor);
-//
-//        add_v3_v3(obCoor, vecToSphere);
-//
-//        // convert to local space
-//        float iobMat[4][4];
-//        invert_m4_m4(iobMat, ob->obmat);
-//        mul_m4_v3(iobMat, obCoor);
-        
-        // apply obCoor
-//        copy_v3_v3(vertexCos[i], obCoor);
-//    }
 }
 
 static void panel_draw(const bContext *UNUSED(C), Panel *panel)
