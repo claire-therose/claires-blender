@@ -91,7 +91,7 @@ static void initData(ModifierData *md)
   MEMCPY_STRUCT_AFTER(smd, DNA_struct_default_get(SquishModifierData), modifier);
 }
 
-static void updateDepsgraph(ModifierData *md, const ModifierUpdateDepsgraphContext *ctx)
+static void updateDepsgraph(ModifierData *UNUSED(md), const ModifierUpdateDepsgraphContext *ctx)
 {
   DEG_add_object_relation(
     ctx->node, ctx->scene->camera, DEG_OB_COMP_TRANSFORM, "Squish Modifier");
@@ -100,7 +100,7 @@ static void updateDepsgraph(ModifierData *md, const ModifierUpdateDepsgraphConte
 
 static void deformVerts(ModifierData *md,
                         const ModifierEvalContext *ctx,
-                        struct Mesh *mesh,
+                        struct Mesh *UNUSED(mesh),
                         float (*vertexCos)[3],
                         int verts_num)
 {
