@@ -400,7 +400,7 @@ GPENCIL_tLayer *gpencil_layer_cache_add(GPENCIL_PrivateData *pd,
     DRW_shgroup_uniform_float_copy(grp, "gpVertexColorOpacity", vert_col_opacity);
     
     if (pd->scene->camera) {
-        /* this method for getting fov is from lineart_cpu.c - works great! */
+        /* this method for getting fov is from lineart_cpu.c */
         Camera* cam = (Camera *)pd->scene->camera->data;
         float sensor = BKE_camera_sensor_size(cam->sensor_fit, cam->sensor_x, cam->sensor_y);
         const double fov = focallength_to_fov(cam->lens, sensor);
