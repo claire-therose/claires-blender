@@ -7,12 +7,14 @@
 Claire's Custom Blender
 =======
 
-Heyo everyone! This is my custom blender repository, where I tinker with blender to customize it to my needs. 
+Hey everyone - This is my custom blender repository, where I tinker with Blender to customize it to my needs. 
 Feel free to look around!
 
 Current Features
 ----------------
 Screen Space line thickness is relative to the camera, making previewing much easier.
+
+Squish modifier for changing object fov perception.
 
 [More to come!]
 
